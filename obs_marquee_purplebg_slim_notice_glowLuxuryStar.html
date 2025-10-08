@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OBS 跑馬燈（粉紫底柔光掃過＋星光奢華版）</title>
+<style>
+  :root{
+    --height: 50px;
+    --font-size: 26px;
+    --gap: 100px;
+    --pps: 80;
+    --text: #000;
+    --shadow: none;
+    --bg: rgba(230,200,255,0.7);
+    --padding-x: 18px;
+    --weight: 700;
+    --letter: 0.5px;
+  }
+
+  html, body { margin:0; padding:0; background:transparent; overflow:hidden; }
+
+  /* 💜 粉紫底：呼吸光 + 柔亮掃光 */
+  @keyframes bgBreathing {
+    0%, 100% { background-color: rgba(230,200,255,0.6); box-shadow: 0 0 10px rgba(230,200,255,0.5); }
+    50% { background-color: rgba(240,215,255,0.95); box-shadow: 0 0 30px rgba(240,210,255,1); }
+  }
+  @keyframes lightSweep {
+    0% { opacity: 0; transform: translateX(-120%) skewX(-20deg); }
+    20% { opacity: 0.7; }
+    50% { opacity: 1; transform: translateX(110%) skewX(-20deg); }
+    80% { opacity: 0.5; }
+    100% { opacity: 0; transform: translateX(200%) skewX(-20deg); }
+  }
+
+  .wrap{
+    position:relative; width:100vw; height:var(--height);
+    display:flex; align-items:center; padding:0 var(--padding-x);
+    background:var(--bg); box-sizing:border-box;
+    border-radius: 10px;
+    animation: bgBreathing 8s ease-in-out infinite;
+    overflow: hidden;
+  }
+
+  /* ✨ 光掃層 */
+  .wrap::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -70%;
+    width: 80%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 40%, rgba(255,255,255,0.6) 60%, rgba(255,255,255,0) 100%);
+    filter: blur(16px);
+    animation: lightSweep 7s ease-in-out infinite;
+  }
+
+  /* 🌟 星光閃爍 */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+  .stars {
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .star {
+    position:absolute;
+    border-radius:50%;
+    opacity:0.3;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  .viewport{ position:relative; width:100%; height:100%; overflow:hidden; }
+
+  .track{
+    position:absolute; top:50%; transform:translate3d(0,-50%,0);
+    display:flex; flex-wrap:nowrap; white-space:nowrap; align-items:center;
+    will-change:transform; backface-visibility:hidden; contain:content;
+  }
+
+  .segment{ display:inline-flex; align-items:center; gap:var(--gap); white-space:nowrap; }
+
+  .item{
+    display:inline-flex; align-items:center; gap:10px;
+    white-space:nowrap;
+    font-family: system-ui,-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;
+    font-size:var(--font-size); font-weight:var(--weight); letter-spacing:var(--letter);
+    color:var(--text); text-shadow:var(--shadow);
+    -webkit-font-smoothing: antialiased; text-rendering:optimizeLegibility;
+  }
+  .highlight{ color:#00b900; }
+  .spacer{ width:var(--gap); height:1px; display:inline-block; }
+
+  /* 💛 橘黃標籤 */
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes noticeGlow {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,200,0,0.6); }
+    50% { box-shadow: 0 0 20px rgba(255,220,100,0.9); }
+  }
+  .notice{
+    display:inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #FF9800, #FFD54F, #FFB300, #FFEE58);
+    background-size: 300% 300%;
+    color: #4A2A00;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(255,200,0,0.4);
+    animation: gradientFlow 5s linear infinite, noticeGlow 8s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stars" id="stars"></div>
+    <div class="viewport">
+      <div class="track" id="track"></div>
+    </div>
+  </div>
+
+<script>
+const messages = [
+  '📱 LINE客服 : <span class="highlight">@225crrmi</span>',
+  '<span class="notice">請準時結單，避免影響下單權限</span>',
+  '🎁 直播不定時放福利，記得關注留言區'
+];
+
+const track = document.getElementById('track');
+
+function buildSegment(){
+  const seg = document.createElement('div');
+  seg.className = 'segment';
+  for(const m of messages){
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = m;
+    seg.appendChild(d);
+  }
+  const spacer = document.createElement('span');
+  spacer.className = 'spacer';
+  seg.appendChild(spacer);
+  return seg;
+}
+
+let segWidth = 0;
+function layout(){
+  track.innerHTML = '';
+  const seg1 = buildSegment();
+  track.appendChild(seg1);
+  segWidth = seg1.getBoundingClientRect().width;
+  const seg2 = seg1.cloneNode(true);
+  track.appendChild(seg2);
+  x = 0;
+  track.style.transform = 'translate3d(0,-50%,0)';
+}
+
+let x = 0, last = performance.now();
+function tick(t){
+  const dt = (t - last) / 1000;
+  last = t;
+  const pps = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pps')) || 80;
+  x -= pps * dt;
+  if (x <= -segWidth) x += segWidth;
+  const xi = Math.floor(x);
+  track.style.transform = `translate3d(${xi}px,-50%,0)`;
+  requestAnimationFrame(tick);
+}
+
+window.addEventListener('load', ()=>{
+  layout();
+  last = performance.now();
+  requestAnimationFrame(tick);
+  createStars();
+});
+window.addEventListener('resize', ()=>{ layout(); });
+
+/* 🌟 建立星光 */
+function createStars(){
+  const stars = document.getElementById('stars');
+  stars.innerHTML = '';
+  const colors = ['rgba(255,240,200,0.9)', 'rgba(255,220,255,0.8)']; // 白金 + 粉金
+  for(let i=0;i<10;i++){ // 中等密度約10顆
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 4 + 2;
+    star.style.width = `${size}px`;
+    star.style.height = `${size}px`;
+    star.style.background = colors[Math.floor(Math.random()*colors.length)];
+    star.style.top = `${Math.random()*100}%`;
+    star.style.left = `${Math.random()*100}%`;
+    const delay = Math.random() * 4;
+    const duration = 3 + Math.random()*2;
+    star.style.animation = `twinkle ${duration}s ease-in-out ${delay}s infinite`;
+    stars.appendChild(star);
+  }
+}
+</script>
+</body>
+</html>
